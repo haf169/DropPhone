@@ -1,0 +1,114 @@
+services:
+  # ================================
+  # PostgreSQL Database
+  # ================================
+  db:
+    image: postgres:15-alpine
+    container_name: dropphone_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-dropphone}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dropphone_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - dropphone_network
+    # ⚡ Healthcheck: đảm bảo API chỉ start sau khi DB sẵn sàng
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-dropphone}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ================================
+  # NestJS API Backend
+  # ================================
+  api:
+    build:
+      context: ./backend
+      dockerfile: ../backend.Dockerfile
+      target: development
+    container_name: dropphone_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-dropphone_secret}
+      DB_DATABASE: ${DB_DATABASE:-dropphone}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:3001}
+    ports:
+      - "3001:3001"
+    volumes:
+      # Hot-reload: mount source code vào container
+      - ./backend/src:/app/src
+      - ./backend/uploads:/app/uploads
+      # Tránh ghi đè node_modules của container
+      - /app/node_modules
+    networks:
+      - dropphone_network
+    depends_on:
+      db:
+        condition: service_healthy  # Chờ DB healthy trước khi start
+    command: npm run start:dev
+
+  # ================================
+  # Next.js Frontend
+  # ================================
+  web:
+    build:
+      context: ./frontend
+      dockerfile: ../frontend.Dockerfile
+      target: development
+    container_name: dropphone_web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: ${API_BASE_URL:-http://localhost:3001}/api
+    ports:
+      - "3000:3000"
+    volumes:
+      # Hot-reload: mount source code
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - dropphone_network
+    depends_on:
+      - api
+    command: npm run dev
+
+  # ================================
+  # Adminer - Quản lý DB qua Web UI
+  # ================================
+  adminer:
+    image: adminer:latest
+    container_name: dropphone_adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: pepa-linha-dark
+    ports:
+      - "8080:8080"
+    networks:
+      - dropphone_network
+    depends_on:
+      - db
+
+# ================================
+# Volumes & Networks
+# ================================
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  dropphone_network:
+    driver: bridge

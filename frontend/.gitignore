@@ -1,0 +1,6 @@
+# DropPhone Frontend
+node_modules
+.next
+out
+.env.local
+*.log
