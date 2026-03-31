@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getSounds, reportDrop, getDeviceId, getDeviceModel, type Sound } from '@/lib/api';
+import { getSounds, reportDrop, getDeviceId, getDeviceModel, getBestDeviceModel, type Sound } from '@/lib/api';
 import { useMotion, requestMotionPermission } from '@/lib/useMotion';
 import BottomNav from '@/components/BottomNav';
 import SettingsPage from '@/components/SettingsPage';
@@ -39,7 +39,11 @@ export default function App() {
   // ── Init ──
   useEffect(() => {
     deviceId.current = getDeviceId();
+    // Dùng ngay UA-based model làm fallback, sau đó cập nhật bằng native API
     deviceModel.current = getDeviceModel();
+    getBestDeviceModel().then((model) => {
+      deviceModel.current = model;
+    });
     // Load settings từ localStorage
     const saved = localStorage.getItem('dropphone_settings');
     if (saved) setSettings(JSON.parse(saved));
