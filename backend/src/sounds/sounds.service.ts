@@ -29,27 +29,15 @@ export class SoundsService implements OnModuleInit {
   private async seedDefaultSounds() {
     const defaults = [
       {
-        name: 'Wilhelm Scream',
-        description: 'Tiếng hét kinh điển khi điện thoại rơi tự do',
-        filename: 'scream_wilhelm.mp3',
+        name: 'Emotional Damage',
+        description: 'EMOTIONAL DAMAGE!! khi điện thoại rơi tự do',
+        filename: 'emotional-damage-meme.mp3',
         type: SoundType.FALL,
       },
       {
-        name: 'Anime Scream',
-        description: 'Tiếng hét kiểu anime khi rơi',
-        filename: 'scream_anime.mp3',
-        type: SoundType.FALL,
-      },
-      {
-        name: 'Cartoon Bonk',
-        description: 'Tiếng "bonk" vui nhộn khi bị tát',
-        filename: 'slap_bonk.mp3',
-        type: SoundType.SLAP,
-      },
-      {
-        name: 'Hard Slap',
-        description: 'Tiếng tát mạnh đau điếng',
-        filename: 'slap_hard.mp3',
+        name: 'Emotional Damage',
+        description: 'EMOTIONAL DAMAGE!! khi bị tát',
+        filename: 'emotional-damage-meme.mp3',
         type: SoundType.SLAP,
       },
     ];

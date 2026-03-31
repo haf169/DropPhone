@@ -54,25 +54,39 @@ export default function App() {
     getSounds()
       .then(setSounds)
       .catch(() => {
-        // Fallback khi backend chưa chạy
+        // Fallback khi backend chưa chạy — dùng file trong /public/sounds/
         setSounds([
-          { id: 1, name: 'Scream', filename: 'scream.mp3', url: '', type: 'FALL' },
-          { id: 2, name: 'Ouch!', filename: 'ouch.mp3', url: '', type: 'SLAP' },
-          { id: 3, name: 'THUD!', filename: 'thud.mp3', url: '', type: 'FALL' },
-          { id: 4, name: 'Crash!', filename: 'crash.mp3', url: '', type: 'SLAP' },
+          { id: 1, name: 'Emotional Damage', filename: 'emotional-damage-meme.mp3', url: '/sounds/emotional-damage-meme.mp3', type: 'FALL' },
+          { id: 2, name: 'Emotional Damage', filename: 'emotional-damage-meme.mp3', url: '/sounds/emotional-damage-meme.mp3', type: 'SLAP' },
+          { id: 3, name: 'Emotional Damage', filename: 'emotional-damage-meme.mp3', url: '/sounds/emotional-damage-meme.mp3', type: 'FALL' },
+          { id: 4, name: 'Emotional Damage', filename: 'emotional-damage-meme.mp3', url: '/sounds/emotional-damage-meme.mp3', type: 'SLAP' },
         ]);
       })
       .finally(() => setLoadingSounds(false));
   }, []);
 
-  // ── Play sound ──
+  // ── Play sound — reuse 1 Audio element (fix iOS Safari limit) ──
   const playSound = useCallback((soundId: number) => {
     const sound = sounds.find(s => s.id === soundId);
     if (!sound?.url) return;
-    if (audioRef.current) audioRef.current.pause();
-    const audio = new Audio(sound.url);
+
+    // Tạo Audio element 1 lần duy nhất, tái sử dụng cho các lần sau
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+
+    const audio = audioRef.current;
+    audio.pause();
+
+    // Chỉ load() khi src thực sự thay đổi — tránh lỗi Android Chrome
+    const resolvedSrc = new URL(sound.url, window.location.href).href;
+    if (audio.src !== resolvedSrc) {
+      audio.src = sound.url;
+      audio.load();
+    }
+
+    audio.currentTime = 0;
     audio.play().catch(() => {});
-    audioRef.current = audio;
   }, [sounds]);
 
   // ── Event handlers ──

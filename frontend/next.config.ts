@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: process.env.CAPACITOR_BUILD === "true",
   },
+  // Cho phép truy cập từ IP LAN khi test trên điện thoại
+  allowedDevOrigins: [
+    "192.168.1.*",
+    "10.0.*.*",
+    "172.16.*.*",
+    "100.*.*.*",   // Tailscale / VPN range
+  ],
 };
 
 export default nextConfig;
